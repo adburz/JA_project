@@ -46,6 +46,22 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <AdditionalDependencies>JA_cppAlgo.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\OneDrive\OneDrive - Politechnika Śląska\STUDIA\SEM 5\JA-projekt\repo\JA_cppAlgo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalDependencies>JA_cppAlgo.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\OneDrive\OneDrive - Politechnika Śląska\STUDIA\SEM 5\JA-projekt\repo\JA_cppAlgo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
@@ -90,6 +106,7 @@
     <QtMoc Include="Steganography.h" />
     <ClCompile Include="BMP_Header.cpp" />
     <ClCompile Include="BMP_Manager.cpp" />
+    <ClCompile Include="ProcTimer.cpp" />
     <ClCompile Include="Steganography.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -99,6 +116,7 @@
   <ItemGroup>
     <ClInclude Include="BMP_Header.h" />
     <ClInclude Include="BMP_Manager.h" />
+    <ClInclude Include="ProcTimer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

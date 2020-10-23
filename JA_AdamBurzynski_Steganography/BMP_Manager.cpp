@@ -7,13 +7,23 @@
 #define insertOne	0x80
 #define insertZero	0x7F
 
-//extern "C" void _stdcall cppEncoding(char*& bmpArr, std::vector<char> msg);
-//extern "C" void _stdcall cppDecoding(int begin, int end, char* bmpArray, std::vector<char> & decMessage);
+extern "C" void _stdcall cppEncoding(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd);
+extern "C" void _stdcall cppDecoding(int begin, int end, char* bmpArray, std::vector<char> & decMessage);
+
+long GetFileSize(std::string filename)
+{
+	struct stat stat_buf;
+	int rc = stat(filename.c_str(), &stat_buf);
+	return rc == 0 ? stat_buf.st_size : -1;
+}
 
 int BMP_Manager::checkImage()
 {
 	clearData();
-	//!czyszczenie buforow funkcja 
+	if (GetFileSize(bmpPath))
+	{
+
+	}
 	std::ifstream fileStream = std::ifstream(bmpPath, std::ios::binary | std::ios::in);
 	if (fileStream.is_open())
 	{
@@ -55,68 +65,68 @@ int BMP_Manager::checkImage()
 			QMessageBox::Ok, nullptr);
 		mBox.exec();
 	}
-	//!to samo co z poczatku
+	clearData();
 	fileStream.close();
 	return 0;
 }
 
-void BMP_Manager::cppEncoding(char*& bmpArr, std::vector<char> msg) //!msgLength
-{
-	short r;
-	for (int j = 0; j < msg.size(); j++)
-	{
-		for (int i = 1; i <= 8 * RGBspace; i+= RGBspace)	//i=1, bo zaczynamy kodowac G (BGR)
-		{
-			r = msg[j] % 2;	// czytamy sobie ostatni bit
-
-			unsigned char tmp = ((unsigned char)bmpArr[8 * j + i]) % 2;
-			if (tmp != r)	//jesli mozna pominac zamiane 
-			{
-				if (r == 1)
-				{							//wiadomo ze na koncu jest 0, bo nie weszlo w ifa 54
-					bmpArr[8 * j + i] += 1;	//dodajemy 1 na koniec
-				}
-				else						//przypadek gdzie na koncu jest 1, a r=0
-				{
-					bmpArr[8 * j + i] -= 1;	//!porpawic to
-				}
-			}
-			msg[j] >>= 1;			//przesuwamy bity przygotowujac na nastepny bit do czytania
-		}
-	}
-}
-
-void BMP_Manager::cppDecoding(int begin, int end, char* bmpArray, std::vector<char>& decMessage)
-{
-	short r;
-	char letter = 0;
-	bool bylo = false;
-	for (int j = begin; j < end; ++j)
-	{
-		for (int i = 1; i <= 8* RGBspace; i+= RGBspace)
-		{
-			r = ((unsigned char)bmpArray[i + j * 8]) % 2;
-
-			if (r == 1)
-			{
-				//letter = letter || insertOne;
-				letter += 0b10000000;
-				bylo = true;
-			}
-			if (i != 22)	//bo przesuwam o 1 raz duzo 
-				letter >>= 1;
-
-			if (bylo)
-			{
-				letter -= 0b10000000;
-			}
-			bylo = false;
-		}
-		decMessage.push_back(letter);
-		letter = 0;
-	}
-
-}
+//void BMP_Manager::cppEncoding(char*& bmpArr, std::vector<char> msg) //!msgLength
+//{
+//	short r;
+//	for (int j = 0; j < msg.size(); j++)
+//	{
+//		for (int i = 1; i <= 8 * RGBspace; i+= RGBspace)	//i=1, bo zaczynamy kodowac G (BGR)
+//		{
+//			r = msg[j] % 2;	// czytamy sobie ostatni bit
+//
+//			unsigned char tmp = ((unsigned char)bmpArr[8 * j + i]) % 2;
+//			if (tmp != r)	//jesli mozna pominac zamiane 
+//			{
+//				if (r == 1)
+//				{							//wiadomo ze na koncu jest 0, bo nie weszlo w ifa 54
+//					bmpArr[8 * j + i] += 1;	//dodajemy 1 na koniec
+//				}
+//				else						//przypadek gdzie na koncu jest 1, a r=0
+//				{
+//					bmpArr[8 * j + i] -= 1;	//!porpawic to
+//				}
+//			}
+//			msg[j] >>= 1;			//przesuwamy bity przygotowujac na nastepny bit do czytania
+//		}
+//	}
+//}
+//
+//void BMP_Manager::cppDecoding(int begin, int end, char* bmpArray, std::vector<char>& decMessage)
+//{
+//	short r;
+//	char letter = 0;
+//	bool bylo = false;
+//	for (int j = begin; j < end; ++j)
+//	{
+//		for (int i = 1; i <= 8* RGBspace; i+= RGBspace)
+//		{
+//			r = ((unsigned char)bmpArray[i + j * 8]) % 2;
+//
+//			if (r == 1)
+//			{
+//				//letter = letter || insertOne;
+//				letter += 0b10000000;
+//				bylo = true;
+//			}
+//			if (i != 22)	//bo przesuwam o 1 raz duzo 
+//				letter >>= 1;
+//
+//			if (bylo)
+//			{
+//				letter -= 0b10000000;
+//			}
+//			bylo = false;
+//		}
+//		decMessage.push_back(letter);
+//		letter = 0;
+//	}
+//
+//}
 
 void BMP_Manager::loadMessage()
 {
@@ -124,6 +134,7 @@ void BMP_Manager::loadMessage()
 	std::ifstream inMsg = std::ifstream(msgPath, std::ios::binary);
 	if (inMsg.is_open())
 	{
+		encMessage.clear();
 		int i = 0;
 		while (!inMsg.eof() && i < accMsgMem)
 		{
@@ -159,11 +170,12 @@ void BMP_Manager::loadImage()
 		int height = bmpHeader.getHight();
 		char* padTrash = new char[padding];
 
-		bmpArray = new char[width * height * 3];
+		bmpByteCount = width * height * RGBspace;
+		bmpArray = new char[bmpByteCount];
 
 		for (int i = 0; i < height; i++)
 		{
-			fileStream.read(&this->bmpArray[i * width * 3], sizeof(char) * width * 3);
+			fileStream.read(&this->bmpArray[i * width * RGBspace], sizeof(char) * width * 3);
 			fileStream.read(padTrash, sizeof(char) * padding);
 		}
 		//this->bmpArray = new char[bmpHeader.getByteCount()];
@@ -193,13 +205,42 @@ void BMP_Manager::saveImage()
 
 void BMP_Manager::runEncoder(bool algType)
 {
+	std::vector<std::thread> threadV;
 	loadMessage();
 	if (algType == cppAlg)
 	{
+		if (msgLength < threadCount)
+		{
+			threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
+		}
+		long long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
+		long long threadOffset = msgLength / threadCount;
+
+
 		//!dodac zapisywanie ilosc znakow
 		//!do funkcji powinny byc przekazywane dane o odpowiedniej dlugosci, czyli 
 		//! dlugosc msg * 8 = ilosc charow w bmpArray, bo na kazdy znak przypada 8 bajtow
-		cppEncoding(this->bmpArray, encMessage);
+		int i;
+
+		for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
+		{
+			std::thread th(cppEncoding, this->bmpArray, 0 + i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+				encMessage, 0 + i * threadOffset, threadOffset);
+
+			threadV.push_back(std::move(th));
+
+			//cppEncoding(this->bmpArray, 0+i* threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, encMessage, 0 + i * threadOffset, threadOffset);
+		}
+		std::thread th(cppEncoding, this->bmpArray, moduloRest + i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+			encMessage, moduloRest + i * threadOffset, threadOffset);
+		threadV.push_back(std::move(th));
+
+		timer.start();
+		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		{
+			threadV[j].join();
+		}
+		timer.stop();
 	}
 	else //asm algo
 	{
@@ -216,7 +257,12 @@ void BMP_Manager::runDecoder(bool algType)
 	decMessage = { {} };
 	if (algType == cppAlg)
 	{
-		cppDecoding(0, 6/*!msgLength ilosc znakow*/, bmpArray, decMessage[0]);
+		for (int i = 0; i < threadCount; i++)
+		{
+			cppDecoding(0, 7/*!msgLength ilosc znakow*/, bmpArray, decMessage[0]);
+
+
+		}
 	}
 	else
 	{
@@ -224,9 +270,10 @@ void BMP_Manager::runDecoder(bool algType)
 	}
 }
 
-void BMP_Manager::run(bool programType, bool algType, short threadCount)
+__int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 {
 	loadImage();
+	threadCount = tCount;
 	if (programType == encoder)
 	{
 		runEncoder(algType);
@@ -238,7 +285,7 @@ void BMP_Manager::run(bool programType, bool algType, short threadCount)
 		saveMessage();
 	}
 
-
+	return timer.getCounterTotalTicks();
 }
 
 void BMP_Manager::set_resPath(std::string filePath)

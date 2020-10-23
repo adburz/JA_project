@@ -1,0 +1,1 @@
+; tutaj bedzie kod asemblera

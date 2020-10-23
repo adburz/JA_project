@@ -1,9 +1,14 @@
 #pragma once
+#include <Windows.h>
 #include <QMessageBox>
 #include <string>
 #include <vector>
-#include <fstream> //ifstream
+#include <thread>
+#include <fstream> 
+#include <utility>
+#include <functional>
 #include "BMP_Header.h"
+#include "ProcTimer.h"
 
 
 class BMP_Manager
@@ -18,7 +23,7 @@ public:
 	
 	int getPadding();
 
-	void run(bool programType, bool algType, short threadCount);
+	__int64 run(bool programType, bool algType, short tCount);
 	
 	void set_resPath(std::string filePath);
 	void set_bmpPath(std::string filePath);
@@ -31,28 +36,31 @@ private:
 	std::string msgPath;
 
 	long accMsgMem;	//accessible message memmory
-	long msgLength;
+	long long msgLength; //in bytes/number of chars
+	short threadCount;
+
+	long long bmpByteCount;
+	char* bmpArray = nullptr;	//bitmapa
+
 	BMP_Header bmpHeader;
 
 	void runEncoder(bool algType);
 	void runDecoder(bool algType);
 
-	void cppEncoding(char* &bmpArr, std::vector<char> encMessage);
-	void cppDecoding(int begin, int end, char* bmpArray, std::vector<char> &decMessage);
+	//void cppEncoding(char* &bmpArr, std::vector<char> encMessage);
+	//void cppDecoding(int begin, int end, char* bmpArray, std::vector<char> &decMessage);
 
 	void saveImage();
 	void saveMessage();
-
-
-	char* bmpArray = nullptr;	//bitmapa
-
-
-
 	void loadMessage();
 
-
-	
 	std::vector<char> encMessage;
 	std::vector<std::vector<char>> decMessage;
+
+	//----------TIMER----------
+	OperationTimer timer;
+
+	
+	
 
 };

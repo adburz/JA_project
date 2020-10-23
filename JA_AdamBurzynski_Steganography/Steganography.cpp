@@ -2,7 +2,7 @@
 #define bmpState 0
 #define msgState 1
 #define resState 2
-
+#define cppAlgo 1
 
 
 
@@ -87,7 +87,15 @@ void Steganography::on_runButton_clicked()
     bool programType = ui.encoderRadioButton->isChecked();
     bool algType = ui.algoCppRadioButton->isChecked();
     short threadCount = ui.CPU_threads->value();
-    bmpManager.run(programType, algType, threadCount);
+    __int64 result = bmpManager.run(programType, algType, threadCount);
+    if (algType == cppAlgo)
+    {
+        ui.cpp_ticks->setText(QString::number(result));
+    }
+    else
+    {
+        ui.asm_ticks->setText(QString::number(result));
+    }
 }
 
 void Steganography::on_decoderRadioButton_clicked()

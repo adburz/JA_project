@@ -367,22 +367,22 @@ p, li { white-space: pre-wrap; }
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>10</y>
-     <width>131</width>
+     <x>220</x>
+     <y>30</y>
+     <width>161</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
-    <string>Algorithm operation time:</string>
+    <string>Algorithm operation time in ticks:</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>30</y>
-     <width>121</width>
+     <x>200</x>
+     <y>50</y>
+     <width>31</width>
      <height>16</height>
     </rect>
    </property>
@@ -393,14 +393,40 @@ p, li { white-space: pre-wrap; }
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>50</y>
-     <width>121</width>
+     <x>200</x>
+     <y>70</y>
+     <width>21</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
     <string>Cpp:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="asm_ticks">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>50</y>
+     <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="cpp_ticks">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>70</y>
+     <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
    </property>
   </widget>
  </widget>
