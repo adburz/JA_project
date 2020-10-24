@@ -16,6 +16,9 @@ public:
 	
 	int charArrToInt(char* cArray, int offset);
 	
+	void setMsgCharCount(unsigned int mCount);
+	unsigned int getMsgCharCount();
+
 	int getImageSize();
 	int getHight();
 	int getWidth();

@@ -52,6 +52,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>E:\OneDrive\OneDrive - Politechnika Śląska\STUDIA\SEM 5\JA-projekt\repo\JA_cppAlgo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -60,6 +61,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>E:\OneDrive\OneDrive - Politechnika Śląska\STUDIA\SEM 5\JA-projekt\repo\JA_cppAlgo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
@@ -106,6 +108,7 @@
     <QtMoc Include="Steganography.h" />
     <ClCompile Include="BMP_Header.cpp" />
     <ClCompile Include="BMP_Manager.cpp" />
+    <ClCompile Include="Memory_Manager.cpp" />
     <ClCompile Include="ProcTimer.cpp" />
     <ClCompile Include="Steganography.cpp" />
     <ClCompile Include="main.cpp" />
@@ -116,6 +119,7 @@
   <ItemGroup>
     <ClInclude Include="BMP_Header.h" />
     <ClInclude Include="BMP_Manager.h" />
+    <ClInclude Include="Memory_Manager.h" />
     <ClInclude Include="ProcTimer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

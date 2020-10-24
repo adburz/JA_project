@@ -13,6 +13,26 @@ BMP_Header::BMP_Header()
 
 }
 
+void BMP_Header::setMsgCharCount(unsigned int mCount)
+{
+	short rest = mCount % 2;
+	unsigned int first = mCount / 2;
+	
+	unsigned int second = mCount / 2;
+	second += rest;
+
+	fileHeader.bfReserved1 = first;
+	fileHeader.bfReserved2 = second;
+
+}
+unsigned int BMP_Header::getMsgCharCount()
+{
+	unsigned int first = fileHeader.bfReserved1 ;
+	unsigned int second = fileHeader.bfReserved2 ;
+
+	return first + second;
+}
+
 int BMP_Header::charArrToInt(char* cArray, int offset)
 {
 	int result;

@@ -8,7 +8,7 @@
 #define insertZero	0x7F
 
 extern "C" void _stdcall cppEncoding(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd);
-extern "C" void _stdcall cppDecoding(int begin, int end, char* bmpArray, std::vector<char> & decMessage);
+extern "C" void _stdcall cppDecoding(char* bmpArray, int aBegin, std::vector<char> & decMessage, int vEnd);
 
 
 //void BMP_Manager::LoadDLL(bool algType)
@@ -174,15 +174,17 @@ void BMP_Manager::loadMessage()
 void BMP_Manager::saveMessage()
 {
 	std::ofstream output = std::ofstream(resPath + "/result_message.txt", std::ios::binary);
-	char* oc = decMessage[0].data();
-	output.write(decMessage[0].data(), decMessage[0].size());
+	for (int i = 0; i < decMessage.size(); i++)
+	{
+		char* oc = decMessage[i].data();
+		output.write(decMessage[i].data(), decMessage[i].size());
+	}
 	output.close();
 }
 
 void BMP_Manager::loadImage()
 {
 	clearData();
-	//!czyszczenie buforow funkcja 
 	//!----- wrzucic powtarzana czesc do osobnej f
 	std::ifstream fileStream = std::ifstream(bmpPath, std::ios::binary | std::ios::in);
 	if (fileStream.is_open())
@@ -210,7 +212,6 @@ void BMP_Manager::loadImage()
 	}
 	fileStream.close();
 }
-
 void BMP_Manager::saveImage()
 {
 	//!pamietac o padingu
@@ -230,17 +231,17 @@ void BMP_Manager::saveImage()
 		output.close();
 	}
 }
-
 void BMP_Manager::runEncoder(bool algType)
 {
 	std::vector<std::thread> threadV;
 	loadMessage();
+	if (msgLength < threadCount)
+	{
+		threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
+	}
 	if (algType == cppAlg)
 	{
-		if (msgLength < threadCount)
-		{
-			threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
-		}
+		
 		long long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
 		long long threadOffset = msgLength / threadCount;
 
@@ -269,6 +270,7 @@ void BMP_Manager::runEncoder(bool algType)
 		}
 		timer.stop();
 		
+		this->bmpHeader.setMsgCharCount(msgLength);
 	}
 	else //asm algo
 	{
@@ -282,15 +284,48 @@ void BMP_Manager::runEncoder(bool algType)
 void BMP_Manager::runDecoder(bool algType)
 {
 	//!
-	decMessage = { {} };
+
+	std::vector<std::thread> threadV;
+	if (msgLength < threadCount)
+	{
+		threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
+	}
 	if (algType == cppAlg)
 	{
-		//for (int i = 0; i < threadCount; i++)
-		//{
-			cppDecoding(0, 92/*!msgLength ilosc znakow*/, bmpArray, decMessage[0]);
+
+		long long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
+		long long thMsgOffset = msgLength / threadCount;
+		int i=0;
+		
+		std::vector<char> msgVector1, msgVector2, msgVector3, msgVector4, msgVector5, msgVector6, msgVector7;
+		decMessage.push_back(std::move(msgVector1));
+		decMessage.push_back(std::move(msgVector2));
+		decMessage.push_back(std::move(msgVector3));
 
 
-		//}
+		for (i = 0; i < threadCount - 1; i++)
+		{
+			//std::vector<char> msgVector{};
+			//decMessage.push_back(msgVector);
+			std::thread th(cppDecoding, bmpArray,i * thMsgOffset/*!msgLength ilosc znakow*/ * 8 *RGBspace, std::ref(decMessage[i]), thMsgOffset);
+
+			threadV.push_back(std::move(th));
+		}
+		//std::vector<char> msgVector{};
+		//decMessage.push_back(msgVector);
+		std::thread th(cppDecoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/ * 8 * RGBspace, std::ref(decMessage[i]), thMsgOffset + moduloRest);
+		
+		threadV.push_back(std::move(th));
+	
+		//TODO przerzucic do osobnej funkcji =====================
+		timer.start();
+		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		{
+			threadV[j].join();
+		}
+		timer.stop();
+		//decMessage.push_back(msgVector);
+		//TODO ==================================================
 	}
 	else
 	{
@@ -300,20 +335,33 @@ void BMP_Manager::runDecoder(bool algType)
 
 __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 {
-	loadImage();
 	threadCount = tCount;
-	if (programType == encoder)
-	{
-		runEncoder(algType);
-		saveImage();
+	if(this->meMan.ifHugeFile(bmpPath))
+	{ 
+		run_partMode(programType, algType);
 	}
-	else //decoder
+	else //can fit in one load
 	{
-		runDecoder(algType);
-		saveMessage();
+		loadImage();
+		if (programType == encoder)
+		{
+			runEncoder(algType);
+			saveImage();
+		}
+		else //decoder
+		{
+			this->msgLength = this->bmpHeader.getMsgCharCount();
+			runDecoder(algType);
+			saveMessage();
+		}
 	}
 	clearData();
 	return timer.getCounterTotalTicks();
+}
+
+void BMP_Manager::run_partMode(bool programType, bool algType)
+{
+
 }
 
 void BMP_Manager::set_resPath(std::string filePath)

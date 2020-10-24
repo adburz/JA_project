@@ -4,16 +4,16 @@
 
 #define RGBspace 3
 
-void cppDecoding(int begin, int end, char* bmpArray, std::vector<char>& decMessage)
+void cppDecoding(char* bmpArray, int aBegin, std::vector<char>& decMessage, int vEnd)
 {
 	short r;
 	char letter = 0;
 	bool bylo = false;
-	for (long long j = begin; j < end; ++j)
+	for (long j = aBegin; j < vEnd + aBegin; ++j)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)
 		{
-			r = ((unsigned char)bmpArray[i + j * 8 * RGBspace]) % 2;
+			r = ((unsigned char)bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;
 
 			if (r == 1)
 			{

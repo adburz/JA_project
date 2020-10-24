@@ -8,6 +8,7 @@
 #include <utility>
 #include <functional>
 #include "BMP_Header.h"
+#include "Memory_Manager.h"
 #include "ProcTimer.h"
 
 //typedef int(CALLBACK* cppDecoding)(int begin, int end, char* bmpArray, std::vector<char>& decMessage);
@@ -19,6 +20,7 @@ class BMP_Manager
 public:
 	BMP_Manager()
 	{
+		threadCount = 1;
 	}
 	int checkImage();
 	
@@ -27,6 +29,7 @@ public:
 	int getPadding();
 
 	__int64 run(bool programType, bool algType, short tCount);
+	void run_partMode(bool programType, bool algType);
 	
 	void set_resPath(std::string filePath);
 	void set_bmpPath(std::string filePath);
@@ -39,7 +42,7 @@ private:
 	std::string msgPath;
 
 	long accMsgMem;	//accessible message memmory
-	long long msgLength; //in bytes/number of chars
+	unsigned int msgLength; //in bytes/number of chars
 	short threadCount;
 
 	long long bmpByteCount;
@@ -47,15 +50,20 @@ private:
 
 	BMP_Header bmpHeader;
 
+
+	//!Memmory manager
+	MemoryManager meMan;
+	
+
 	void runEncoder(bool algType);
 	void runDecoder(bool algType);
-
-	//void cppEncoding(char* &bmpArr, std::vector<char> encMessage);
-	//void cppDecoding(int begin, int end, char* bmpArray, std::vector<char> &decMessage);
 
 	void saveImage();
 	void saveMessage();
 	void loadMessage();
+
+	char* encMsg;
+	char* decMsg;
 
 	std::vector<char> encMessage;
 	std::vector<std::vector<char>> decMessage;
