@@ -10,13 +10,40 @@
 extern "C" void _stdcall cppEncoding(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd);
 extern "C" void _stdcall cppDecoding(int begin, int end, char* bmpArray, std::vector<char> & decMessage);
 
+
+//void BMP_Manager::LoadDLL(bool algType)
+//{
+//	//TODO ----------------------------
+//	//if (algType == cppAlg)
+//	//{
+//	//	this->hDLL = LoadLibraryA("JA_cppAlgo");
+//	//	if (this->hDLL != NULL)
+//	//	{
+//	//		decoding = (cppDecoding)GetProcAddress(hDLL, "cppDecoding");
+//	//		encoding = (cppEncoding)GetProcAddress(hDLL, "cppEncoding");
+//	//	}
+//	//	else
+//	//	{
+//	//		// handle the error
+//	//		FreeLibrary(hDLL);
+//	//		// here is place to some expection
+//	//	}
+//	//}
+//	//else
+//	//{
+//	//	this->hDLL = LoadLibraryA("JA_asmAlgo");
+//	//}
+//	//TODO ----------------------------
+//
+//}
+
+
 long GetFileSize(std::string filename)
 {
 	struct stat stat_buf;
 	int rc = stat(filename.c_str(), &stat_buf);
 	return rc == 0 ? stat_buf.st_size : -1;
 }
-
 int BMP_Manager::checkImage()
 {
 	clearData();
@@ -30,7 +57,7 @@ int BMP_Manager::checkImage()
 		fileStream.read((char*)&this->bmpHeader.fileHeader, sizeof(BITMAPFILEHEADER));
 		if (bmpHeader.isBMP())
 		{
-			
+
 			//!tego nie trzeba
 			//!sprawdzac kodowanie kolorow
 			char* tmp = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
@@ -69,7 +96,6 @@ int BMP_Manager::checkImage()
 	fileStream.close();
 	return 0;
 }
-
 //void BMP_Manager::cppEncoding(char*& bmpArr, std::vector<char> msg) //!msgLength
 //{
 //	short r;
@@ -141,9 +167,10 @@ void BMP_Manager::loadMessage()
 			encMessage.push_back(inMsg.get());
 			i++;
 		}
-		msgLength = i;
+		msgLength = i-1 /*because inMas.get() loads additional one byte*/;
 	}
 }
+
 void BMP_Manager::saveMessage()
 {
 	std::ofstream output = std::ofstream(resPath + "/result_message.txt", std::ios::binary);
@@ -183,6 +210,7 @@ void BMP_Manager::loadImage()
 	}
 	fileStream.close();
 }
+
 void BMP_Manager::saveImage()
 {
 	//!pamietac o padingu
@@ -216,24 +244,23 @@ void BMP_Manager::runEncoder(bool algType)
 		long long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
 		long long threadOffset = msgLength / threadCount;
 
-
-		//!dodac zapisywanie ilosc znakow
-		//!do funkcji powinny byc przekazywane dane o odpowiedniej dlugosci, czyli 
-		//! dlugosc msg * 8 = ilosc charow w bmpArray, bo na kazdy znak przypada 8 bajtow
 		int i;
-
+		//TODO LoadDLL(cppAlg);
 		for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
 		{
+			//TODO LoadDLL(cppAlg);
 			std::thread th(cppEncoding, this->bmpArray, 0 + i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
 				encMessage, 0 + i * threadOffset, threadOffset);
 
 			threadV.push_back(std::move(th));
-
+			//TODO FreeLibrary(hDLL);
 			//cppEncoding(this->bmpArray, 0+i* threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, encMessage, 0 + i * threadOffset, threadOffset);
 		}
-		std::thread th(cppEncoding, this->bmpArray, moduloRest + i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-			encMessage, moduloRest + i * threadOffset, threadOffset);
+		//TODO LoadDLL(cppAlg);
+		std::thread th(cppEncoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+			encMessage, i * threadOffset, threadOffset + moduloRest);
 		threadV.push_back(std::move(th));
+		//TODO FreeLibrary(hDLL);
 
 		timer.start();
 		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
@@ -241,6 +268,7 @@ void BMP_Manager::runEncoder(bool algType)
 			threadV[j].join();
 		}
 		timer.stop();
+		
 	}
 	else //asm algo
 	{
@@ -257,12 +285,12 @@ void BMP_Manager::runDecoder(bool algType)
 	decMessage = { {} };
 	if (algType == cppAlg)
 	{
-		for (int i = 0; i < threadCount; i++)
-		{
-			cppDecoding(0, 7/*!msgLength ilosc znakow*/, bmpArray, decMessage[0]);
+		//for (int i = 0; i < threadCount; i++)
+		//{
+			cppDecoding(0, 92/*!msgLength ilosc znakow*/, bmpArray, decMessage[0]);
 
 
-		}
+		//}
 	}
 	else
 	{
@@ -284,7 +312,7 @@ __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 		runDecoder(algType);
 		saveMessage();
 	}
-
+	clearData();
 	return timer.getCounterTotalTicks();
 }
 
@@ -308,6 +336,7 @@ void BMP_Manager::clearData()
 {
 	if (bmpHeader.fileInfoHeader != nullptr)
 		delete[]bmpHeader.fileInfoHeader;
+	bmpHeader.fileInfoHeader = nullptr;
 }
 
 int BMP_Manager::getPadding()

@@ -10,6 +10,9 @@
 #include "BMP_Header.h"
 #include "ProcTimer.h"
 
+//typedef int(CALLBACK* cppDecoding)(int begin, int end, char* bmpArray, std::vector<char>& decMessage);
+//typedef int(CALLBACK* cppEncoding)(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd);
+
 
 class BMP_Manager
 {
@@ -60,7 +63,10 @@ private:
 	//----------TIMER----------
 	OperationTimer timer;
 
+	//----------EXPLICIT LINKING----------
+	//cppDecoding decoding;    // Function pointer
+	//cppEncoding encoding;    // Function pointer
 	
-	
-
+	//HINSTANCE hDLL;               // Handle to DLL
+	//void LoadDLL(bool algType);
 };

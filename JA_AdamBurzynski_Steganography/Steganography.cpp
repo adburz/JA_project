@@ -79,7 +79,8 @@ void Steganography::on_resultPathButton_clicked()
 
 void Steganography::on_quitButton_clicked()
 {
-    //!to do
+    //TODO FreeLibrary(hDLL);
+
 }
 
 void Steganography::on_runButton_clicked()
@@ -102,6 +103,7 @@ void Steganography::on_decoderRadioButton_clicked()
 {
     runEnable[msgState] = true;
     ui.loadMsgButton->setEnabled(false);
+    ui.loadMsgTextBox->setText(QString(""));
     checkRunButton();
 }
 
