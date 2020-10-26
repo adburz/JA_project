@@ -11,6 +11,7 @@
 #include "Memory_Manager.h"
 #include "ProcTimer.h"
 
+
 //typedef int(CALLBACK* cppDecoding)(int begin, int end, char* bmpArray, std::vector<char>& decMessage);
 //typedef int(CALLBACK* cppEncoding)(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd);
 
@@ -24,17 +25,20 @@ public:
 	}
 	int checkImage();
 	
+	void loadHeaders();
 	void loadImage();
 	
 	int getPadding();
 
 	__int64 run(bool programType, bool algType, short tCount);
-	void run_partMode(bool programType, bool algType);
+	void run_partMode_encoder(bool algType);
+	void run_partMode_decoder(bool algType);
 	
 	void set_resPath(std::string filePath);
 	void set_bmpPath(std::string filePath);
 	void set_msgPath(std::string filePath);
 
+	void clearMsg();
 	void clearData();
 private:
 	std::string resPath;
@@ -62,11 +66,8 @@ private:
 	void saveMessage();
 	void loadMessage();
 
-	char* encMsg;
-	char* decMsg;
+	char* message = nullptr;
 
-	std::vector<char> encMessage;
-	std::vector<std::vector<char>> decMessage;
 
 	//----------TIMER----------
 	OperationTimer timer;

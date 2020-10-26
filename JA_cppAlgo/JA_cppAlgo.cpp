@@ -4,12 +4,13 @@
 
 #define RGBspace 3
 
-void cppDecoding(char* bmpArray, int aBegin, std::vector<char>& decMessage, int vEnd)
+void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 {
 	short r;
+	long i = 0; 
 	char letter = 0;
 	bool bylo = false;
-	for (long j = aBegin; j < vEnd + aBegin; ++j)
+	for (long j = aBegin; j < mEnd + aBegin; ++j)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)
 		{
@@ -30,20 +31,22 @@ void cppDecoding(char* bmpArray, int aBegin, std::vector<char>& decMessage, int 
 			}
 			bylo = false;
 		}
-		decMessage.push_back(letter);
+		*(msg + mBegin + i) = letter;
 		letter = 0;
+		i++;
 	}
 
 }
 
-void cppEncoding(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, int vEnd) //!msgLength
+void cppEncoding(char* bmpArr, int aBegin, char* msg, int mBegin, int mEnd) //!msgLength
 {
 	short r;
-	for (int j = 0; j < vEnd; j++)
+	char tmp;
+	for (int j = 0; j < mEnd; j++)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)	//i=1, bo zaczynamy kodowac G (BGR)
 		{
-			r = msg[vBegin + j] % 2;	// czytamy sobie ostatni bit
+			r = msg[mBegin + j] % 2;	// czytamy sobie ostatni bit
 
 			unsigned char tmp = ((unsigned char)bmpArr[8 * j *RGBspace + i + aBegin]) % 2;
 			if (tmp != r)	//jesli mozna pominac zamiane 
@@ -57,7 +60,10 @@ void cppEncoding(char* bmpArr, int aBegin, std::vector<char> msg, int vBegin, in
 					*(bmpArr + (8 * j * RGBspace + i + aBegin)) -= 1;	
 				}
 			}
-			msg[vBegin + j] >>= 1;			//przesuwamy bity przygotowujac na nastepny bit do czytania
+			tmp = *(msg + mBegin + j);
+			tmp >>= 1;			//przesuwamy bity przygotowujac na nastepny bit do czytania]
+			*(msg + mBegin + j) = tmp;
+
 		}
 	}
 }
