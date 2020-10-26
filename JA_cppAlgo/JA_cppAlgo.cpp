@@ -6,7 +6,7 @@
 
 void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 {
-	short r;
+	short r, a;
 	long i = 0; 
 	char letter = 0;
 	bool bylo = false;
@@ -14,8 +14,11 @@ void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)
 		{
-			r = ((unsigned char)bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;
+			r = ((unsigned char)bmpArray[i + j * 8 * RGBspace]) % 2;
 
+			/*a = (bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;
+			*(bmpArray + (i + j * 8 * RGBspace + aBegin)) += 1;
+			a = (bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;*/
 			if (r == 1)
 			{
 				//letter = letter || insertOne;

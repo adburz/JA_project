@@ -64,7 +64,7 @@ private:
 
 	void saveImage();
 	void saveMessage();
-	void loadMessage();
+	unsigned int loadMessage();
 
 	char* message = nullptr;
 
