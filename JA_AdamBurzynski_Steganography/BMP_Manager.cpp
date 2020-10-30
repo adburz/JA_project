@@ -7,36 +7,30 @@
 #define insertOne	0x80
 #define insertZero	0x7F
 
-extern "C" void _stdcall cppEncoding(char* bmpArr, int aBegin, char* msg, int mBegin, int mEnd);
-extern "C" void _stdcall cppDecoding(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd);
 
+void BMP_Manager::LoadDLL(bool algType)
+{
+	if (algType == cppAlg)
+	{
+		this->hDLL = LoadLibraryA("JA_cppAlgo");
+	}
+	else
+	{
+		this->hDLL = LoadLibraryA("JA_asmAlgo");
+	}
 
-//void BMP_Manager::LoadDLL(bool algType)
-//{
-//	//TODO ----------------------------
-//	//if (algType == cppAlg)
-//	//{
-//	//	this->hDLL = LoadLibraryA("JA_cppAlgo");
-//	//	if (this->hDLL != NULL)
-//	//	{
-//	//		decoding = (cppDecoding)GetProcAddress(hDLL, "cppDecoding");
-//	//		encoding = (cppEncoding)GetProcAddress(hDLL, "cppEncoding");
-//	//	}
-//	//	else
-//	//	{
-//	//		// handle the error
-//	//		FreeLibrary(hDLL);
-//	//		// here is place to some expection
-//	//	}
-//	//}
-//	//else
-//	//{
-//	//	this->hDLL = LoadLibraryA("JA_asmAlgo");
-//	//}
-//	//TODO ----------------------------
-//
-//}
+	if (this->hDLL != NULL)
+	{
+		encoding = (ENCODING)GetProcAddress(hDLL, "encoding");
+		decoding = (DECODING)GetProcAddress(hDLL, "decoding");
+		
+		if (!decoding || !encoding)
+		{
+			FreeLibrary(hDLL);
+		}
 
+	}
+}
 
 
 int BMP_Manager::checkImage()
@@ -116,6 +110,8 @@ unsigned int BMP_Manager::loadMessage()
 		msgLength = msgSize;
 	}
 	inMsg.close();
+
+	return msgSize;
 }
 
 void BMP_Manager::saveMessage()
@@ -184,44 +180,36 @@ void BMP_Manager::runEncoder(bool algType)
 		{
 			threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
 		}
-		if (algType == cppAlg)
-		{
 
-			long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
-			long threadOffset = msgLength / threadCount;
+		long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
+		long threadOffset = msgLength / threadCount;
 
-			int i;
-			//TODO LoadDLL(cppAlg);
-			for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
-			{
-				//TODO LoadDLL(cppAlg);
-				std::thread th(cppEncoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-					this->message, i * threadOffset, threadOffset);
+		int i;
+		LoadDLL(algType);
+		//encoding(this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, this->message, i * threadOffset, threadOffset);
+		encoding(this->bmpArray, 1, this->message, 2, 3);
+		//for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
+		//{	
+		//	std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+		//		this->message, i * threadOffset, threadOffset);
 
-				threadV.push_back(std::move(th));
-				//TODO FreeLibrary(hDLL);
-				//cppEncoding(this->bmpArray, 0+i* threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, encMessage, 0 + i * threadOffset, threadOffset);
-			}
-			//TODO LoadDLL(cppAlg);
-			std::thread th(cppEncoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-				this->message, i * threadOffset, threadOffset + moduloRest);
-			threadV.push_back(std::move(th));
-			//TODO FreeLibrary(hDLL);
+		//	threadV.push_back(std::move(th));
+		//}
 
+		//std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+		//	this->message, i * threadOffset, threadOffset + moduloRest);
+		//threadV.push_back(std::move(th));
 
-			timer.start();
-			for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
-			{
-				threadV[j].join();
-			}
-			timer.stop();
+		//timer.start();
+		//for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		//{
+		//	threadV[j].join();
+		//}
+		//timer.stop();
+		FreeLibrary(hDLL);
 
-			this->bmpHeader.setMsgCharCount(msgLength);
-		}
-		else //asm algo
-		{
+		this->bmpHeader.setMsgCharCount(msgLength);
 
-		}
 	}
 	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Encoded successfully."),
 		QMessageBox::Ok, nullptr);
@@ -237,39 +225,28 @@ void BMP_Manager::runDecoder(bool algType)
 		{
 			threadCount = msgLength;	//czyli na kazdy watek przypada 1 znak.
 		}
-		if (algType == cppAlg)
-		{
-			long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
-			long thMsgOffset = msgLength / threadCount;
-			int i = 0;
-			for (i = 0; i < threadCount - 1; i++)
-			{
-				//std::vector<char> msgVector{};
-				//decMessage.push_back(msgVector);
-				std::thread th(cppDecoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
+		int i = 0;
+		long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
+		long thMsgOffset = msgLength / threadCount;
 
-				threadV.push_back(std::move(th));
-			}
-			//std::vector<char> msgVector{};
-			//decMessage.push_back(msgVector);
-			std::thread th(cppDecoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset + moduloRest);
+		LoadDLL(algType);
+		decoding(bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
+		//for (i = 0; i < threadCount - 1; i++)
+		//{
+		//	std::thread th(decoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
+		//	threadV.push_back(std::move(th));
+		//}
 
-			threadV.push_back(std::move(th));
+		//std::thread th(decoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset + moduloRest);
+		//threadV.push_back(std::move(th));
 
-			//TODO przerzucic do osobnej funkcji =====================
-			timer.start();
-			for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
-			{
-				threadV[j].join();
-			}
-			timer.stop();
-			//decMessage.push_back(msgVector);
-			//TODO ==================================================
-		}
-		else
-		{
-
-		}
+		//timer.start();
+		//for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		//{
+		//	threadV[j].join();
+		//}
+		//timer.stop();
+		FreeLibrary(hDLL);
 	}
 }
 

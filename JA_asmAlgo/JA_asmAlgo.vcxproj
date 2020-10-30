@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f92b2665-eb6b-4c59-916f-949b4968d763}</ProjectGuid>
+    <ProjectGuid>{2d0c073c-7a1f-4fb4-8ed9-1b9848a3148d}</ProjectGuid>
     <RootNamespace>JAasmAlgo</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -150,7 +150,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ModuleDefinitionFile>JA_asmAlgo.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -167,10 +166,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="JA_asmAlgo.asm" />
+    <None Include="JA_asmAlgo.def" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="JA_asmAlgo.def" />
+    <MASM Include="JA_asmAlgo.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

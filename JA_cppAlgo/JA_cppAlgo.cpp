@@ -4,9 +4,9 @@
 
 #define RGBspace 3
 
-void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
+void decoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 {
-	short r, a;
+	short LSB;
 	long i = 0; 
 	char letter = 0;
 	bool bylo = false;
@@ -14,12 +14,8 @@ void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)
 		{
-			r = ((unsigned char)bmpArray[i + j * 8 * RGBspace]) % 2;
-
-			/*a = (bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;
-			*(bmpArray + (i + j * 8 * RGBspace + aBegin)) += 1;
-			a = (bmpArray[i + j * 8 * RGBspace + aBegin]) % 2;*/
-			if (r == 1)
+			LSB = ((unsigned char)bmpArray[i + j * 8 * RGBspace]) % 2;
+			if (LSB == 1)
 			{
 				//letter = letter || insertOne;
 				letter += 0b10000000;
@@ -41,26 +37,26 @@ void cppDecoding(char* bmpArray, int aBegin, char* msg,int mBegin, int mEnd)
 
 }
 
-void cppEncoding(char* bmpArr, int aBegin, char* msg, int mBegin, int mEnd) //!msgLength
+void encoding(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd) //!msgLength
 {
-	short r;
-	char tmp;
+	short LSB;
+	unsigned char tmp;
 	for (int j = 0; j < mEnd; j++)
 	{
 		for (int i = 1; i <= 8 * RGBspace; i += RGBspace)	//i=1, bo zaczynamy kodowac G (BGR)
 		{
-			r = msg[mBegin + j] % 2;	// czytamy sobie ostatni bit
+			LSB = msg[mBegin + j] % 2;	// czytamy sobie ostatni bit
 
-			unsigned char tmp = ((unsigned char)bmpArr[8 * j *RGBspace + i + aBegin]) % 2;
-			if (tmp != r)	//jesli mozna pominac zamiane 
+			tmp = ((unsigned char)bmpArray[8 * j *RGBspace + i + aBegin]) % 2;
+			if (tmp != LSB)	//jesli mozna pominac zamiane 
 			{
-				if (r == 1)
+				if (LSB == 1)
 				{							//wiadomo ze na koncu jest 0, bo nie weszlo w ifa 54
-					*(bmpArr + (8 * j * RGBspace + i + aBegin)) += 1;	//dodajemy 1 na koniec
+					*(bmpArray + (8 * j * RGBspace + i + aBegin)) += 1;	//dodajemy 1 na koniec
 				}
 				else						//przypadek gdzie na koncu jest 1, a r=0
 				{
-					*(bmpArr + (8 * j * RGBspace + i + aBegin)) -= 1;	
+					*(bmpArray + (8 * j * RGBspace + i + aBegin)) -= 1;
 				}
 			}
 			tmp = *(msg + mBegin + j);

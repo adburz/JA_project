@@ -31,13 +31,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="JA_asmAlgo.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="JA_asmAlgo.def">
       <Filter>Source Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="JA_asmAlgo.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

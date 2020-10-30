@@ -1,3 +1,4 @@
 LIBRARY "JA_asmAlgo"
 EXPORTS
-MyProc1
+encoding
+decoding
