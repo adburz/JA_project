@@ -10,7 +10,7 @@ Steganography::Steganography(QWidget* parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
-    runEnable[bmpState] = runEnable[msgState] = runEnable[resState] = false;
+    runEnable[bmpState] = runEnable[msgState] = runEnable[resState] = /*false*/true;
 }
 void Steganography::checkRunButton()
 {

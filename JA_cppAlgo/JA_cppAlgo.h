@@ -5,5 +5,5 @@
 #define JACPPALGO_API __declspec(dllimport)
 #endif
 
-extern "C" JACPPALGO_API void decoding(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd);
-extern "C" JACPPALGO_API void encoding(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd);
+extern "C" JACPPALGO_API void decoding(char* bmpArray, char* msg, int mEnd);
+extern "C" JACPPALGO_API void encoding(char* bmpArray, char* msg, int mEnd);

@@ -28,7 +28,14 @@ void MemoryManager::loadLimits(int offsetPosition, long width)
 
 std::uintmax_t MemoryManager::loadFileSize(std::string fPath)
 {
-	std::uintmax_t fileSize = std::filesystem::file_size(fPath);
+	std::uintmax_t fileSize;
+	try {
+		fileSize = std::filesystem::file_size(fPath);
+	}
+	catch (std::exception e)
+	{
+		return 0;
+	}
 	return fileSize;
 }
 
@@ -36,6 +43,11 @@ bool MemoryManager::isEnoughSpace(std::string bmp_path, std::string msg_path, bo
 {
 	loadGlobalMemStatusEx();
 	bmp_fileSize = loadFileSize(bmp_path);
+	if (bmp_fileSize == 0)
+	{
+		return false;
+	}
+
 	if (pType == ENCODER)
 	{
 		msg_fileSize = loadFileSize(msg_path);
@@ -44,6 +56,7 @@ bool MemoryManager::isEnoughSpace(std::string bmp_path, std::string msg_path, bo
 	{
 		msg_fileSize = mLength;
 	}
+
 	if ((bmp_fileSize + msg_fileSize) > maxMemUse)
 	{
 		return false;

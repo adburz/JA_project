@@ -21,6 +21,9 @@ public:
 	BMP_Manager()
 	{
 		threadCount = 1;
+		resPath = "C:/Users/Adam/Desktop/projekt";
+		bmpPath;
+		msgPath = "C:/Users/Adam/Desktop/projekt/wiadomosc.txt";
 	}
 	int checkImage();
 	
@@ -72,8 +75,8 @@ private:
 	OperationTimer timer;
 
 	//----------EXPLICIT LINKING----------
-	typedef void(CALLBACK *DECODING)(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd);
-	typedef void(CALLBACK *ENCODING)(char* bmpArray, int aBegin, char* msg, int mBegin, int mEnd);
+	typedef void(CALLBACK *DECODING)(char* bmpArray, char* msg, int mEnd);
+	typedef void(CALLBACK *ENCODING)(char* bmpArray, char* msg, int mEnd);
 	DECODING decoding;    // Function pointer
 	ENCODING encoding;    // Function pointer
 	

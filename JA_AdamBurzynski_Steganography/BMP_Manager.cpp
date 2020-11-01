@@ -2,7 +2,8 @@
 #define byteSize 8 //bits
 #define encoder true
 #define cppAlg true
-#define RGBspace 3
+#define BMP_BYTE_COUNT_FOR_ONE_CHAR 24
+#define BGR_SPACE_BYTE_COUNT 3
 
 #define insertOne	0x80
 #define insertZero	0x7F
@@ -23,7 +24,7 @@ void BMP_Manager::LoadDLL(bool algType)
 	{
 		encoding = (ENCODING)GetProcAddress(hDLL, "encoding");
 		decoding = (DECODING)GetProcAddress(hDLL, "decoding");
-		
+
 		if (!decoding || !encoding)
 		{
 			FreeLibrary(hDLL);
@@ -52,7 +53,7 @@ int BMP_Manager::checkImage()
 			if (bmpHeader.is24bit(tmp))
 			{
 				accMsgMem = this->bmpHeader.getByteCount(tmp) / byteSize;
-				accMsgMem /= RGBspace;
+				accMsgMem /= BGR_SPACE_BYTE_COUNT;
 				fileStream.close();
 				return accMsgMem;
 			}
@@ -138,9 +139,9 @@ void BMP_Manager::loadImage()
 		int height = bmpHeader.getHight();
 		char* padTrash = new char[padding];
 
-		bmpByteCount = width * height * RGBspace;
+		bmpByteCount = width * height * BGR_SPACE_BYTE_COUNT;
 		bmpArray = new char[bmpByteCount];
-		int widthBytes = (width * RGBspace);
+		int widthBytes = (width * BGR_SPACE_BYTE_COUNT);
 
 		for (int i = 0; i < height; i++)
 		{
@@ -187,25 +188,32 @@ void BMP_Manager::runEncoder(bool algType)
 		int i;
 		LoadDLL(algType);
 		//encoding(this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, this->message, i * threadOffset, threadOffset);
-		encoding(this->bmpArray, 1, this->message, 2, 3);
-		//for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
-		//{	
-		//	std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-		//		this->message, i * threadOffset, threadOffset);
+		//encoding(this->bmpArray, 1, this->message, 2, 3);
+		 //TODO encoding((this->bmpArray + (i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace)),(this->message + (i * threadOffset)), 3);
+		for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
+		{
+			//std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
+			//	this->message, i * threadOffset, threadOffset);
 
-		//	threadV.push_back(std::move(th));
-		//}
+			std::thread th(encoding,
+				(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
+				(this->message + (i * threadOffset)),
+				threadOffset);
+			threadV.push_back(std::move(th));
+		}
 
-		//std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-		//	this->message, i * threadOffset, threadOffset + moduloRest);
-		//threadV.push_back(std::move(th));
+		std::thread th(encoding,
+			(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
+			(this->message + (i * threadOffset)),
+			threadOffset + moduloRest);
+		threadV.push_back(std::move(th));
 
-		//timer.start();
-		//for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
-		//{
-		//	threadV[j].join();
-		//}
-		//timer.stop();
+		timer.start();
+		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		{
+			threadV[j].join();
+		}
+		timer.stop();
 		FreeLibrary(hDLL);
 
 		this->bmpHeader.setMsgCharCount(msgLength);
@@ -230,22 +238,24 @@ void BMP_Manager::runDecoder(bool algType)
 		long thMsgOffset = msgLength / threadCount;
 
 		LoadDLL(algType);
-		decoding(bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
-		//for (i = 0; i < threadCount - 1; i++)
-		//{
-		//	std::thread th(decoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
-		//	threadV.push_back(std::move(th));
-		//}
+		//decoding(bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
 
-		//std::thread th(decoding, bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset + moduloRest);
-		//threadV.push_back(std::move(th));
 
-		//timer.start();
-		//for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
-		//{
-		//	threadV[j].join();
-		//}
-		//timer.stop();
+		for (i = 0; i < threadCount - 1; i++)
+		{
+			std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset);
+			threadV.push_back(std::move(th));
+		}
+
+		std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset + moduloRest);
+		threadV.push_back(std::move(th));
+
+		timer.start();
+		for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		{
+			threadV[j].join();
+		}
+		timer.stop();
 		FreeLibrary(hDLL);
 	}
 }
@@ -263,6 +273,15 @@ __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 			run_partMode_decoder(algType);
 		}
 	}*/
+	if (programType == encoder)
+	{
+		bmpPath = "C:/Users/Adam/Desktop/projekt/sample.bmp";
+	}
+	else
+	{
+		bmpPath = "C:/Users/Adam/Desktop/projekt/result_bitmap.bmp";
+	}
+
 	threadCount = tCount;
 	if (this->meMan.isEnoughSpace(bmpPath, msgPath, programType, this->msgLength))
 	{
@@ -282,7 +301,7 @@ __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 		clearData();
 		return timer.getCounterTotalTicks();
 	}
-	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Not enough free memory to run program."),
+	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Not enough free memory to run program \nor file path does not exist."),
 		QMessageBox::Ok, nullptr);
 	mBox.exec();
 	return 0;
@@ -319,11 +338,11 @@ void BMP_Manager::run_partMode_encoder(bool algType)
 		char* padTrash = new char[padding];
 		long width = bmpHeader.getWidth();
 		long height = bmpHeader.getHight();
-		long bmpSize = width * height * RGBspace;
+		long bmpSize = width * height * BGR_SPACE_BYTE_COUNT;
 
 		meMan.loadLimits(offsetPosition, width);
 
-		long widthBytes = (width * RGBspace);
+		long widthBytes = (width * BGR_SPACE_BYTE_COUNT);
 
 		int bmp_loopCounter = meMan.maxBMP_size / widthBytes;
 
