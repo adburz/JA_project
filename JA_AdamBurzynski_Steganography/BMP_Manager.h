@@ -33,8 +33,6 @@ public:
 	int getPadding();
 
 	__int64 run(bool programType, bool algType, short tCount);
-	void run_partMode_encoder(bool algType);
-	void run_partMode_decoder(bool algType);
 	
 	void set_resPath(std::string filePath);
 	void set_bmpPath(std::string filePath);
@@ -66,6 +64,8 @@ private:
 
 	void saveImage();
 	void saveMessage();
+
+	bool msgIsAscii();
 	unsigned int loadMessage();
 
 	char* message = nullptr;

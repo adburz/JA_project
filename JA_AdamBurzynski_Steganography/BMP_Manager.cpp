@@ -44,8 +44,6 @@ int BMP_Manager::checkImage()
 		fileStream.read((char*)&this->bmpHeader.fileHeader, sizeof(BITMAPFILEHEADER));
 		if (bmpHeader.isBMP())
 		{
-
-			//!tego nie trzeba
 			//!sprawdzac kodowanie kolorow
 			char* tmp = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
 			fileStream.read(tmp, this->bmpHeader.fileHeader.bfOffBits - 14);
@@ -93,17 +91,28 @@ void BMP_Manager::clearMsg()
 	message = nullptr;
 }
 
+bool BMP_Manager::msgIsAscii()
+{
+	for (int i = 0; i < msgLength; i++)
+	{
+		if (message[i] > 0b011111111 || message[i] < 0b00000000)	//sprawdzam czy kazdy bajt wiadomosci miesci sie w zakresie 0-127
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 unsigned int BMP_Manager::loadMessage()
 {
-	//!obsluga bledow
 	std::uintmax_t msgSize = meMan.loadFileSize(msgPath);
-	std::ifstream inMsg = std::ifstream(msgPath, std::ios::binary);
 	clearMsg();
 	if (msgSize > accMsgMem)
 	{
 		msgSize = accMsgMem;
 	}
 
+	std::ifstream inMsg = std::ifstream(msgPath, std::ios::binary);
 	message = new char[msgSize];
 	if (inMsg.is_open())
 	{
@@ -111,8 +120,14 @@ unsigned int BMP_Manager::loadMessage()
 		msgLength = msgSize;
 	}
 	inMsg.close();
-
-	return msgSize;
+	if (msgIsAscii())
+	{
+		return msgLength;
+	}
+	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Message is wrong."),
+		QMessageBox::Ok, nullptr);
+	mBox.exec();
+	return 0;
 }
 
 void BMP_Manager::saveMessage()
@@ -187,14 +202,9 @@ void BMP_Manager::runEncoder(bool algType)
 
 		int i;
 		LoadDLL(algType);
-		//encoding(this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace, this->message, i * threadOffset, threadOffset);
-		//encoding(this->bmpArray, 1, this->message, 2, 3);
-		 //TODO encoding((this->bmpArray + (i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace)),(this->message + (i * threadOffset)), 3);
+		timer.start();
 		for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
 		{
-			//std::thread th(encoding, this->bmpArray, i * threadOffset * 8/*!bo kazdy B wiad = 8B image*/ * RGBspace,
-			//	this->message, i * threadOffset, threadOffset);
-
 			std::thread th(encoding,
 				(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
 				(this->message + (i * threadOffset)),
@@ -208,7 +218,6 @@ void BMP_Manager::runEncoder(bool algType)
 			threadOffset + moduloRest);
 		threadV.push_back(std::move(th));
 
-		timer.start();
 		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
 		{
 			threadV[j].join();
@@ -217,11 +226,10 @@ void BMP_Manager::runEncoder(bool algType)
 		FreeLibrary(hDLL);
 
 		this->bmpHeader.setMsgCharCount(msgLength);
-
+		QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Encoded successfully."),
+			QMessageBox::Ok, nullptr);
+		mBox.exec();
 	}
-	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Encoded successfully."),
-		QMessageBox::Ok, nullptr);
-	mBox.exec();
 }
 
 void BMP_Manager::runDecoder(bool algType)
@@ -238,9 +246,7 @@ void BMP_Manager::runDecoder(bool algType)
 		long thMsgOffset = msgLength / threadCount;
 
 		LoadDLL(algType);
-		//decoding(bmpArray, i * thMsgOffset/*!msgLength ilosc znakow*/, message, i * thMsgOffset, thMsgOffset);
-
-
+		timer.start();
 		for (i = 0; i < threadCount - 1; i++)
 		{
 			std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset);
@@ -250,29 +256,20 @@ void BMP_Manager::runDecoder(bool algType)
 		std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset + moduloRest);
 		threadV.push_back(std::move(th));
 
-		timer.start();
 		for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
 		{
 			threadV[j].join();
 		}
 		timer.stop();
 		FreeLibrary(hDLL);
+		QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Decoded successfully."),
+			QMessageBox::Ok, nullptr);
+		mBox.exec();
 	}
 }
 
 __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 {
-	/*if(this->meMan.isEnoughSpace(bmpPath, msgPath))
-	{
-		if (programType == encoder)
-		{
-			run_partMode_encoder(algType);
-		}
-		else
-		{
-			run_partMode_decoder(algType);
-		}
-	}*/
 	if (programType == encoder)
 	{
 		bmpPath = "C:/Users/Adam/Desktop/projekt/sample.bmp";
@@ -314,72 +311,6 @@ void BMP_Manager::loadHeaders()
 	//TODO fileStream.read(this->bmpHeader.fileInfoHeader, this->bmpHeader.fileHeader.bfOffBits - 14);
 }
 
-void BMP_Manager::run_partMode_encoder(bool algType)
-{
-	//8550831445 
-	// /8 = 1 068 853 930,625
-	// -mod8  = 1 068 853 928
-
-	//odejmujemy = 7 481 977 517
-	//7 481 977 512
-
-	clearData();
-	//TODO najpierw robie encoding w partMode
-	std::ifstream bmp_fileStream = std::ifstream(bmpPath, std::ios::binary | std::ios::in);
-	if (bmp_fileStream.is_open())
-	{
-		int offsetPosition = this->bmpHeader.fileHeader.bfOffBits - 14;
-		bmp_fileStream.read((char*)&this->bmpHeader.fileHeader, sizeof(BITMAPFILEHEADER));
-		this->bmpHeader.fileInfoHeader = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
-		bmp_fileStream.read(this->bmpHeader.fileInfoHeader, offsetPosition);
-
-
-		int padding = this->getPadding();
-		char* padTrash = new char[padding];
-		long width = bmpHeader.getWidth();
-		long height = bmpHeader.getHight();
-		long bmpSize = width * height * BGR_SPACE_BYTE_COUNT;
-
-		meMan.loadLimits(offsetPosition, width);
-
-		long widthBytes = (width * BGR_SPACE_BYTE_COUNT);
-
-		int bmp_loopCounter = meMan.maxBMP_size / widthBytes;
-
-		long loaded = 0;
-
-		while (loaded < bmpSize)
-		{
-
-			message = new char[meMan.maxMsg_size];
-
-			for (int j = 0; j < meMan.maxMsg_size; j++)
-			{
-
-			}
-			bmpArray = new char[meMan.maxBMP_size];
-			for (int i = 0; i < meMan.maxMsg_size * 24; i++)
-			{
-				bmp_fileStream.read(&this->bmpArray[i * widthBytes], sizeof(char) * widthBytes);
-				bmp_fileStream.read(padTrash, sizeof(char) * padding);
-			}
-
-
-
-			//TODO operacja na danych.
-
-			clearData();
-			loaded += (sizeof(char) * widthBytes);
-		}
-
-		//TODO zostaje uglyRest do zaladowania
-	}
-
-}
-
-void BMP_Manager::run_partMode_decoder(bool algType)
-{
-}
 
 void BMP_Manager::set_resPath(std::string filePath)
 {
@@ -403,7 +334,6 @@ void BMP_Manager::clearData()
 	{
 		delete[]bmpHeader.fileInfoHeader;
 	}
-
 
 	bmpHeader.fileInfoHeader = nullptr;
 }

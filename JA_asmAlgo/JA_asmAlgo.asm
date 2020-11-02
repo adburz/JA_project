@@ -153,7 +153,6 @@ outer_for:
 					;ps - caly wektor | ss - skalar(pierwszy element) | cvtsi2ss-konwersja z calkowitego na zmiennoprz
 
 					cvtsi2ss xmm0, r13d					;laduje do rejestr xmm0 najmniej znaczacy bit znaku wiadomosci. Daze do ustawienia w buforze 0|0|LSmB|!LScB (LScB - last significant char bit)
-					;movd xmm0, r13d						;laduje do rejestr xmm0 najmniej znaczacy bit znaku wiadomosci. Daze do ustawienia w buforze 0|0|LSmB|!LScB (LScB - last significant char bit)
 					pshufd xmm0, xmm0, 11100000b		;kopiuje wartosc przy pomocy maski 
 					
 					cmp r13b, 0							;sprawdzam czy bitem bylo zero, aby ewentualnie moc go zanegowac. w przypadku gdy byla jedynka, negacja jest przedstawiona ponizej
@@ -163,7 +162,6 @@ outer_for:
 					shl r13b, 7							;przesuwam o 7 miejsc otrzymujac negacje bitu z rejestru r13b o wartosci 1
 					continue_encoding:
 					cvtsi2ss xmm0, r13d					;laduje zanegowany bit do rejestru uzyskujac ustawienie
-					;movd xmm0, r13d						;laduje zanegowany bit do rejestru uzyskujac ustawienie
 
 						xor r11, r11
 						;teraz bede przygotowywal okreslony bajt tablicy dodajac 1 lub odejmujac 1

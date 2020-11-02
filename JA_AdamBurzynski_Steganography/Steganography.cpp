@@ -79,8 +79,10 @@ void Steganography::on_resultPathButton_clicked()
 
 void Steganography::on_quitButton_clicked()
 {
-    //TODO FreeLibrary(hDLL);
+    bmpManager.clearData();
+    bmpManager.clearMsg();
 
+    QCoreApplication::exit();
 }
 
 void Steganography::on_runButton_clicked()

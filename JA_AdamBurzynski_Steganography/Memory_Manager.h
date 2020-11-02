@@ -31,7 +31,7 @@ public:
 	DWORDLONG Msg_loadSize;
 	DWORDLONG loopCounter;
 
-	void loadLimits(int offsetPosition, long width);
+
 	std::uintmax_t loadFileSize(std::string fPath);
 private:
 	MEMORYSTATUSEX statex;
