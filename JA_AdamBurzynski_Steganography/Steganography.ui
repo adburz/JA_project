@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>288</height>
+    <height>302</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -75,12 +75,12 @@
   </widget>
   <widget class="QPushButton" name="runButton">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>250</y>
+     <x>130</x>
+     <y>270</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -139,7 +139,7 @@ p, li { white-space: pre-wrap; }
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
+     <y>270</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -275,9 +275,9 @@ p, li { white-space: pre-wrap; }
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>220</y>
-     <width>181</width>
+     <x>220</x>
+     <y>230</y>
+     <width>161</width>
      <height>61</height>
     </rect>
    </property>
@@ -332,7 +332,7 @@ Adam Burzyński</string>
    <property name="geometry">
     <rect>
      <x>390</x>
-     <y>220</y>
+     <y>230</y>
      <width>111</width>
      <height>21</height>
     </rect>
@@ -348,7 +348,7 @@ Adam Burzyński</string>
    <property name="geometry">
     <rect>
      <x>390</x>
-     <y>240</y>
+     <y>250</y>
      <width>111</width>
      <height>31</height>
     </rect>
@@ -422,6 +422,32 @@ p, li { white-space: pre-wrap; }
      <x>230</x>
      <y>70</y>
      <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_7">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>250</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Suggested number of threads:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="suggestedN_threads">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>250</y>
+     <width>47</width>
      <height>16</height>
     </rect>
    </property>

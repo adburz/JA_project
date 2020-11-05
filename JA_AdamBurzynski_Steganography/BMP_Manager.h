@@ -13,21 +13,15 @@
 
 
 
-
-
 class BMP_Manager
 {
 public:
 	BMP_Manager()
 	{
 		threadCount = 1;
-		resPath = "C:/Users/Adam/Desktop/projekt";
-		bmpPath;
-		msgPath = "C:/Users/Adam/Desktop/projekt/wiadomosc.txt";
 	}
 	int checkImage();
 	
-	void loadHeaders();
 	void loadImage();
 	
 	int getPadding();
@@ -41,9 +35,9 @@ public:
 	void clearMsg();
 	void clearData();
 private:
-	std::string resPath;
-	std::string bmpPath;
-	std::string msgPath;
+	std::string resPath ;
+	std::string bmpPath ;
+	std::string msgPath ;
 
 	long accMsgMem;	//accessible message memmory
 	unsigned int msgLength; //in bytes/number of chars

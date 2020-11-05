@@ -1,8 +1,8 @@
 #include "Steganography.h"
-#define bmpState 0
-#define msgState 1
-#define resState 2
-#define cppAlgo 1
+#define BMP_STATE 0
+#define MSG_STATE 1
+#define RES_STATE 2
+#define CPP_ALG 1
 
 
 
@@ -10,11 +10,12 @@ Steganography::Steganography(QWidget* parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
-    runEnable[bmpState] = runEnable[msgState] = runEnable[resState] = /*false*/true;
+    runEnable[BMP_STATE] = runEnable[MSG_STATE] = runEnable[RES_STATE] = false;
+    ui.suggestedN_threads->setText(QString::number(std::thread::hardware_concurrency()));
 }
 void Steganography::checkRunButton()
 {
-    if (runEnable[bmpState] == true && runEnable[msgState] == true && runEnable[resState] == true)
+    if (runEnable[BMP_STATE] == true && runEnable[MSG_STATE] == true && runEnable[RES_STATE] == true)
     {
         ui.runButton->setEnabled(true);
     }
@@ -37,11 +38,11 @@ void Steganography::on_loadBmpButton_clicked()
         ui.maxMsgSize->setText(QString::number(result) + " B");
         if (result == 0)
         {
-            runEnable[bmpState] = false;
+            runEnable[BMP_STATE] = false;
         }
         else
         {
-            runEnable[bmpState] = true;
+            runEnable[BMP_STATE] = true;
 
         }
     }
@@ -50,16 +51,12 @@ void Steganography::on_loadBmpButton_clicked()
 
 void Steganography::on_loadMsgButton_clicked()
 {
-
     QString fileName = QFileDialog::getOpenFileName(this, tr("Set message"), "", tr("Text files (*.txt)"));
     if (!fileName.isEmpty())
     {
         bmpManager.set_msgPath(fileName.toStdString());
         ui.loadMsgTextBox->setText(QString(fileName));
-
-        //!w zalozeniach dalem, ze tylko pliki .txt w kodowaniu ascii, wiec sie chyba nie musze przejmowac 
-        //!innymi formatami.
-        runEnable[msgState] = true;
+        runEnable[MSG_STATE] = true;
     }
     checkRunButton();
 }
@@ -72,7 +69,7 @@ void Steganography::on_resultPathButton_clicked()
     {
         bmpManager.set_resPath(dir.toStdString());
         ui.resultPathTextBox->setText(QString(dir));
-        runEnable[resState] = true;
+        runEnable[RES_STATE] = true;
     }
     checkRunButton();
 }
@@ -91,7 +88,7 @@ void Steganography::on_runButton_clicked()
     bool algType = ui.algoCppRadioButton->isChecked();
     short threadCount = ui.CPU_threads->value();
     __int64 result = bmpManager.run(programType, algType, threadCount);
-    if (algType == cppAlgo)
+    if (algType == CPP_ALG)
     {
         ui.cpp_ticks->setText(QString::number(result));
     }
@@ -103,7 +100,7 @@ void Steganography::on_runButton_clicked()
 
 void Steganography::on_decoderRadioButton_clicked()
 {
-    runEnable[msgState] = true;
+    runEnable[MSG_STATE] = true;
     ui.loadMsgButton->setEnabled(false);
     ui.loadMsgTextBox->setText(QString(""));
     checkRunButton();
@@ -111,7 +108,7 @@ void Steganography::on_decoderRadioButton_clicked()
 
 void Steganography::on_encoderRadioButton_clicked()
 {
-    runEnable[msgState] = false;
+    runEnable[MSG_STATE] = false;
     ui.loadMsgButton->setEnabled(true);
     checkRunButton();
 }

@@ -1,17 +1,15 @@
 #include "BMP_Manager.h"
-#define byteSize 8 //bits
-#define encoder true
-#define cppAlg true
+#define BYTE_SIZE 8 //bits
+#define ENCODER true
+#define CPP_ALG true
 #define BMP_BYTE_COUNT_FOR_ONE_CHAR 24
 #define BGR_SPACE_BYTE_COUNT 3
 
-#define insertOne	0x80
-#define insertZero	0x7F
 
 
 void BMP_Manager::LoadDLL(bool algType)
 {
-	if (algType == cppAlg)
+	if (algType == CPP_ALG)
 	{
 		this->hDLL = LoadLibraryA("JA_cppAlgo");
 	}
@@ -44,13 +42,12 @@ int BMP_Manager::checkImage()
 		fileStream.read((char*)&this->bmpHeader.fileHeader, sizeof(BITMAPFILEHEADER));
 		if (bmpHeader.isBMP())
 		{
-			//!sprawdzac kodowanie kolorow
 			char* tmp = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
 			fileStream.read(tmp, this->bmpHeader.fileHeader.bfOffBits - 14);
 
 			if (bmpHeader.is24bit(tmp))
 			{
-				accMsgMem = this->bmpHeader.getByteCount(tmp) / byteSize;
+				accMsgMem = this->bmpHeader.getByteCount(tmp) / BYTE_SIZE;
 				accMsgMem /= BGR_SPACE_BYTE_COUNT;
 				fileStream.close();
 				return accMsgMem;
@@ -65,7 +62,7 @@ int BMP_Manager::checkImage()
 		}
 		else
 		{
-			QMessageBox mBox(QMessageBox::Warning, QString("Warning!"), QString("File isn't .bmp."),
+			QMessageBox mBox(QMessageBox::Warning, QString("Warning!"), QString("Wrong format of file."),
 				QMessageBox::Ok, nullptr);
 			mBox.exec();
 			fileStream.close();
@@ -140,7 +137,6 @@ void BMP_Manager::saveMessage()
 void BMP_Manager::loadImage()
 {
 	clearData();
-	//!----- wrzucic powtarzana czesc do osobnej f
 	std::ifstream fileStream = std::ifstream(bmpPath, std::ios::binary | std::ios::in);
 	if (fileStream.is_open())
 	{
@@ -148,7 +144,6 @@ void BMP_Manager::loadImage()
 
 		this->bmpHeader.fileInfoHeader = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
 		fileStream.read(this->bmpHeader.fileInfoHeader, this->bmpHeader.fileHeader.bfOffBits - 14);
-		//!poprawic wprowadzanie danych
 		int padding = this->getPadding();
 		int width = bmpHeader.getWidth();
 		int height = bmpHeader.getHight();
@@ -163,14 +158,11 @@ void BMP_Manager::loadImage()
 			fileStream.read(&this->bmpArray[i * widthBytes], sizeof(char) * widthBytes);
 			fileStream.read(padTrash, sizeof(char) * padding);
 		}
-		//this->bmpArray = new char[bmpHeader.getByteCount()];
-		//fileStream.read(this->bmpArray, sizeof(char) * bmpHeader.getByteCount());
 	}
 	fileStream.close();
 }
 void BMP_Manager::saveImage()
 {
-	//!pamietac o padingu
 	std::ofstream output = std::ofstream(resPath + "/result_bitmap.bmp", std::ios::binary);
 	if (output.is_open())
 	{
@@ -270,45 +262,33 @@ void BMP_Manager::runDecoder(bool algType)
 
 __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 {
-	if (programType == encoder)
-	{
-		bmpPath = "C:/Users/Adam/Desktop/projekt/sample.bmp";
-	}
-	else
-	{
-		bmpPath = "C:/Users/Adam/Desktop/projekt/result_bitmap.bmp";
-	}
-
 	threadCount = tCount;
-	if (this->meMan.isEnoughSpace(bmpPath, msgPath, programType, this->msgLength))
+	if (this->meMan.isEnoughSpace(bmpPath, msgPath, programType, this->msgLength)
+		&& checkImage() != 0)
 	{
-		loadImage();
-		if (programType == encoder)
-		{
-			runEncoder(algType);
-			saveImage();
-		}
-		else //decoder
-		{
-			this->msgLength = this->bmpHeader.getMsgCharCount();
-			this->message = new char[this->msgLength];
-			runDecoder(algType);
-			saveMessage();
-		}
-		clearData();
+			loadImage();
+			if (programType == ENCODER)
+			{
+				runEncoder(algType);
+				saveImage();
+			}
+			else //decoder
+			{
+				this->msgLength = this->bmpHeader.getMsgCharCount();
+				this->message = new char[this->msgLength];
+				runDecoder(algType);
+				saveMessage();
+			}
+			clearData();
+		
 		return timer.getCounterTotalTicks();
 	}
+		
+	
 	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Not enough free memory to run program \nor file path does not exist."),
 		QMessageBox::Ok, nullptr);
 	mBox.exec();
 	return 0;
-}
-
-void BMP_Manager::loadHeaders()
-{
-	//TODO fileStream.read((char*)&this->bmpHeader.fileHeader, sizeof(BITMAPFILEHEADER));
-	//TODO this->bmpHeader.fileInfoHeader = new char[this->bmpHeader.fileHeader.bfOffBits - 14];
-	//TODO fileStream.read(this->bmpHeader.fileInfoHeader, this->bmpHeader.fileHeader.bfOffBits - 14);
 }
 
 
