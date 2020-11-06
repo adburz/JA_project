@@ -7,7 +7,7 @@
 
 
 
-void BMP_Manager::LoadDLL(bool algType)
+bool BMP_Manager::LoadDLL(bool algType)
 {
 	if (algType == CPP_ALG)
 	{
@@ -26,8 +26,9 @@ void BMP_Manager::LoadDLL(bool algType)
 		if (!decoding || !encoding)
 		{
 			FreeLibrary(hDLL);
+			return false;
 		}
-
+		return true;
 	}
 }
 
@@ -193,34 +194,43 @@ void BMP_Manager::runEncoder(bool algType)
 		long threadOffset = msgLength / threadCount;
 
 		int i;
-		LoadDLL(algType);
-		timer.start();
-		for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
+		if (LoadDLL(algType))
 		{
+			timer.start();
+			for (i = 0; i < threadCount - 1/*bo ostatni thread musi dostac reszte modulo*/; i++)
+			{
+				std::thread th(encoding,
+					(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
+					(this->message + (i * threadOffset)),
+					threadOffset);
+				threadV.push_back(std::move(th));
+			}
+
 			std::thread th(encoding,
 				(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
 				(this->message + (i * threadOffset)),
-				threadOffset);
+				threadOffset + moduloRest);
 			threadV.push_back(std::move(th));
+
+			for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+			{
+				threadV[j].join();
+			}
+			timer.stop();
+
+			FreeLibrary(hDLL);
+			this->bmpHeader.setMsgCharCount(msgLength);
+			QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Encoded successfully."),
+				QMessageBox::Ok, nullptr);
+			mBox.exec();
 		}
-
-		std::thread th(encoding,
-			(this->bmpArray + (i * threadOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)),
-			(this->message + (i * threadOffset)),
-			threadOffset + moduloRest);
-		threadV.push_back(std::move(th));
-
-		for (int j = 0; j < threadCount /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		else
 		{
-			threadV[j].join();
+			QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Loading dll failed. "),
+				QMessageBox::Ok, nullptr);
+			mBox.exec();
 		}
-		timer.stop();
-		FreeLibrary(hDLL);
-
-		this->bmpHeader.setMsgCharCount(msgLength);
-		QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Encoded successfully."),
-			QMessageBox::Ok, nullptr);
-		mBox.exec();
+		
 	}
 }
 
@@ -237,33 +247,41 @@ void BMP_Manager::runDecoder(bool algType)
 		long moduloRest = msgLength % threadCount; //reszta ktora trzeba dolozyc do jednego z watkow
 		long thMsgOffset = msgLength / threadCount;
 
-		LoadDLL(algType);
-		timer.start();
-		for (i = 0; i < threadCount - 1; i++)
+		if (LoadDLL(algType))
 		{
-			std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset);
+			timer.start();
+			for (i = 0; i < threadCount - 1; i++)
+			{
+				std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset);
+				threadV.push_back(std::move(th));
+			}
+
+			std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset + moduloRest);
 			threadV.push_back(std::move(th));
+
+			for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
+			{
+				threadV[j].join();
+			}
+			timer.stop();
+			FreeLibrary(hDLL);
+			QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Decoded successfully."),
+				QMessageBox::Ok, nullptr);
+			mBox.exec();
 		}
-
-		std::thread th(decoding, (this->bmpArray + (i * thMsgOffset * BMP_BYTE_COUNT_FOR_ONE_CHAR)), (message + (i * thMsgOffset)), thMsgOffset + moduloRest);
-		threadV.push_back(std::move(th));
-
-		for (int j = 0; j < threadCount/*threadV.size()*/ /*bo ostatni thread musi dostac reszte modulo*/; j++)
+		else
 		{
-			threadV[j].join();
+			QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Loading dll failed. "),
+				QMessageBox::Ok, nullptr);
+			mBox.exec();
 		}
-		timer.stop();
-		FreeLibrary(hDLL);
-		QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Decoded successfully."),
-			QMessageBox::Ok, nullptr);
-		mBox.exec();
 	}
 }
 
 __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 {
 	threadCount = tCount;
-	if (this->meMan.isEnoughSpace(bmpPath, msgPath, programType, this->msgLength)
+	if (this->meMan.isEnoughSpace(bmpPath, msgPath, programType, this->msgLength, this->accMsgMem)
 		&& checkImage() != 0)
 	{
 			loadImage();
@@ -279,12 +297,9 @@ __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 				runDecoder(algType);
 				saveMessage();
 			}
-			clearData();
-		
 		return timer.getCounterTotalTicks();
 	}
-		
-	
+
 	QMessageBox mBox(QMessageBox::Warning, QString("Information."), QString("Not enough free memory to run program \nor file path does not exist."),
 		QMessageBox::Ok, nullptr);
 	mBox.exec();

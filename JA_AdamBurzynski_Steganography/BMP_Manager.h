@@ -49,7 +49,7 @@ private:
 	BMP_Header bmpHeader;
 
 
-	//!Memmory manager
+	//----------MEMORY MANAGER----------
 	MemoryManager meMan;
 	
 
@@ -75,5 +75,5 @@ private:
 	ENCODING encoding;    // Function pointer
 	
 	HINSTANCE hDLL;               // Handle to DLL
-	void LoadDLL(bool algType);
+	bool LoadDLL(bool algType);
 };

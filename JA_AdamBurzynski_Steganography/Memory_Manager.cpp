@@ -1,6 +1,12 @@
 #include "Memory_Manager.h"
 #define ENCODER true
 
+MemoryManager::MemoryManager()
+{
+	maxMemUse = 0;
+	bmp_fileSize = 0;
+	msg_fileSize = 0;
+}
 
 std::uintmax_t MemoryManager::loadFileSize(std::string fPath)
 {
@@ -15,7 +21,7 @@ std::uintmax_t MemoryManager::loadFileSize(std::string fPath)
 	return fileSize;
 }
 
-bool MemoryManager::isEnoughSpace(std::string bmp_path, std::string msg_path, bool pType, unsigned int mLength)
+bool MemoryManager::isEnoughSpace(std::string bmp_path, std::string msg_path, bool pType, unsigned int mLength, int spaceInBmp)
 {
 	loadGlobalMemStatusEx();
 	bmp_fileSize = loadFileSize(bmp_path);
@@ -27,6 +33,10 @@ bool MemoryManager::isEnoughSpace(std::string bmp_path, std::string msg_path, bo
 	if (pType == ENCODER)
 	{
 		msg_fileSize = loadFileSize(msg_path);
+		if (msg_fileSize > spaceInBmp)
+		{
+			msg_fileSize = spaceInBmp;
+		}
 	}
 	else
 	{

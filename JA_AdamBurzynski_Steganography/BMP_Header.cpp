@@ -7,12 +7,6 @@
 #define RGB 3
 
 
-
-BMP_Header::BMP_Header()
-{
-
-}
-
 void BMP_Header::setMsgCharCount(unsigned int mCount)
 {
 	short rest = mCount % 2;
@@ -90,9 +84,4 @@ bool BMP_Header::isBMP()
 		return true;
 	}
 	return false;
-}
-
-unsigned int BMP_Header::getOffset()
-{
-	return 0;
 }

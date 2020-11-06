@@ -7,10 +7,8 @@
 class BMP_Header
 {
 public:
-	BMP_Header();
+	BMP_Header() {};
 	BITMAPFILEHEADER fileHeader;
-	//!dodac do specyfikacji ze obsluguje tylko ten drugiego headera
-
 
 	char* fileInfoHeader = nullptr;
 	
@@ -25,11 +23,8 @@ public:
 	int getByteCount(char* tmp);
 	bool is24bit(char * tmpArr);
 	bool isBMP();
-	unsigned int getOffset();
 
 	int padSize;
 
-private:
-	
 
 };

@@ -1,22 +1,37 @@
-;Bitmap Steganography, version 0.0
+;Title: Bitmap Steganography
 ;Author: Adam Burzyñski
 ;Subject: Jezyki Assemblerowe
 ;Year: 2020/2021
 ;Compiler: MASM
+;Version: 1.0
+;Version history:
+;v0.0 - powstaje procedura kodowania. Zaimplementowano zewnetrzna oraz wewnetrzna petle.
+;v0.1 - procedure kodujaca, uzupelniono o algorytm kodujacy zawierajacy operacje wektorowe. Algorytm dziala tylko dla 1 watku.
+;v0.2 - powstaje procedura dekodujaca. Zaimplementowano dwie petle oraz algorytm dekodujacy.
+;v0.3 - poprawiono algorytm dekodujacy. Niepotrzebne warunki skoku zostaly zastapione na operacje bitowe (and oraz add).
+;		Algorytm dziala wielowatkowo.
+;v0.4 - poprawiono algorytm kodujacy - algorytm obsluguje wielowatkowosc.
+;v0.5 - usunieto blad w obu procedurach, polegajacy na braku instrukcji push oraz pop rejestru RBX. 
+;v1.0 - dzialajaca wersja finalna.
 
-.data 
+.data	;sekcja danych
 BMP_BYTE_COUNT_FOR_ONE_CHAR BYTE 24		;stala okreslajaca ilosc bajtow obrazu BMP potrzebnych do zakodowania jednego znaku (bajtu) wiadomosci.
 										;poniewaz zamieniamy LSB co trzeci bajt, poniewaz kodujemy tylko na kolorze zielonym, potrzeba 24 bajty -
 										;1 bit kodujemy w b[G]r = 3 bajty.
-.code									;czesc .code odpowiada za kod 
-;======================== DECODING ========================
+.code	;sekcja .code odpowiada za kod 
+;Procedura dekoduj¹ca, jej zadaniem jest zdekodowanie zadanej ilosci znakow z tablicy z obrazem, oraz zapisanie kazdego z odkodowanych znakow w tablicy 
+;zawierajacej odkodowana wiadomosc
+;Parametry wejœciowe:
+;	char* bmpArr - miesci sie w rejestrze RCX. Rejestr RCX przechowuje wskaŸnik na tablicê typu char(1 bajt) w której mieœci siê obraz wraz z zakodowan¹ wiadomoœci¹.
+;	char* msgArr - miesci sie w rejestrze RDX. Rejestr RDX przechowuje wskaŸnik na tablicê typu char(1 bajt) do której zostan¹ zapisywane odkodowane znaki.
+;	int mEnd		- miesci sie w rejestrze R8. Rejestr R8 przechowuje liczbê ca³kowit¹, która oznacza iloœæ znaków do odkodowania.
+;W procedurze u¿ywane s¹ nastêpuj¹ce rejestry: RAX, RBX, RCX, RDX, R8, R9, R12, R13, R15
 decoding PROC
-;_____ Parametry przekazywane do procedury: RCX - bmpArr | RDX - msgArr | R8 - mEnd _____
 
-
-push RBP		; zapisuje adresy rejestrow RBP,RDI,RSP, aby po wykonaniu procedury, zachowac spojnosc w pamieci
+push RBP		; zapisuje adresy rejestrow RBP,RDI,RSP,RBX, aby po wykonaniu procedury, zachowac spojnosc w pamieci
 push RDI				
-push RSP				
+push RSP	
+push RBX
 
 
 mov R9, RDX		;zapisuje wskaznik na tablice z wiadomoscia, aby moc uzywac instrukcji mul, ktora potrzebuje rejestru RDX do poprawnego dzialania
@@ -29,7 +44,6 @@ xor R15,R15		;licznik zewnetrznej petli (outer_for). Petla w cpp wyglada tak: fo
 outer_for:	;etykieta zewnetrznej etykiety-petli for
 	;---------------- INNER FOR ----------------		
 xor R13, R13	;przygotowuje rejestr w ktorym bede skladowal odkodowane dane, budujac z nich znaki (1 bajt).
-
 	inner_for:	;etykieta wewnetrznej etykiety-petli for 
 				;petla wyglada w cpp tak: for(int i=1; i<=24; i+=3) poniewaz kodujemy co trzeci bajt pliku BMP -> 1 bajt wiadomosci = 24 bajty pliku bmp.
 	;obliczam index tablicy z bitmapa	
@@ -56,8 +70,10 @@ xor R13, R13	;przygotowuje rejestr w ktorym bede skladowal odkodowane dane, budu
 	add BL, 3								;inkrementuje licznik wewnetrznej etykiety o 3, poniewaz dekodujemy co 3 bajt. 
 											;Ta wartosc jest uzywana w okresleniu indeksu tablicy z ktorej pobieramy dane do dekodowania.
 	cmp BL, BMP_BYTE_COUNT_FOR_ONE_CHAR		;sprawdzam warunek konczacy petle (iterator <= 24 (BMP_BYTE_COUNT_FOR_ONE_CHAR))
-	jle inner_for							;po sprawdzeniu warunku skoku wewnetrznej petli, skaczemy do kolejnej iteracji, badz tez wychodzimy z niej, przechodzac do kolejnej iteracji zewnetrznej petli
-	jmp inner_loop_end						;jesli warunek nie zostal spelniony, wychodzimy z wewnetrznej petli, przechodzac do zewnetrznej, gdzie nastepnie zostanie sprawdzany warunek petli.
+	jle inner_for							;po sprawdzeniu warunku skoku wewnetrznej petli, skaczemy do kolejnej iteracji, badz tez wychodzimy z niej, 
+											;przechodzac do kolejnej iteracji zewnetrznej petli
+	jmp inner_loop_end						;jesli warunek nie zostal spelniony, wychodzimy z wewnetrznej petli, przechodzac do zewnetrznej, gdzie 
+											;nastepnie zostanie sprawdzany warunek petli.
 
 	bit_right_shift:		;etykieta ktorego zadaniem jest przesuniecie bitowe dekodowanego slowa o 1 w prawo
 	shr r13b, 1				;operacja przesuniecia bitowego dekodowanego slowa o 1 w prawo
@@ -73,25 +89,32 @@ inc R15d			;inkrementuje licznik zewnetrznej etykiety-petli for (outer_for)
 cmp R15d, R8d		;porownuje z mEnd
 jne outer_for	;skacze jesli mniejsze
 	
-pop rsp		;z koncem programu ustawiam spowrotem wartosci rejestrow pobierajac je ze stosu.
-pop rdi						
-pop rbp						
+pop RBX
+pop RSP		;z koncem programu ustawiam spowrotem wartosci rejestrow pobierajac je ze stosu.
+pop RDI						
+pop RBP						
 	
 mov eax, 0	;ustawiam wartosc, ktora zwroci procedura
 ret			;koniec procedury
 ;---------------- OUTER FOR ----------------	
-
-
 decoding ENDP
 ;======================== DECODING ========================
 
+
 ;======================== ENCODING ========================
+;Procedura kodujaca, jej zadniem jest zakodowanie przydzielonej ilosci znaków z tablicy z wiadomoscia w przydzielone miejsce w pamieci (tablica z obrazem). 
+;W prodzedurze zastosowane zosta³y operacje wektorowe.
+;Parametry wejsciowe:
+;	char* bmpArr - mieœci sie w rejestrze RCX. Rejestr RCX przechowuje wskaznik na tablice typu char(1 bajt) w ktorej miesci sie obraz.
+;	char* msgArr - mieœci sie w rejestrze RDX. Rejestr RDX przechowuje wskaznik na tablice typu char(1 bajt) w ktorej miesci sie wiadomosc do zakodowania.
+;	int mEnd		- mieœci sie w rejestrze R8. Rejestr R8 przechowuje liczbe calkowit¹, która oznacza iloœæ znakow do zakodowania.
+;W procedurze u¿ywane s¹ nastêpuj¹ce rejestry: RAX, RBX, RCX, RDX, R8, R9, R11, R12, R13, R14, R15, xmm0, xmm1
 encoding PROC	
-;_____ Parametry przekazywane do procedury: RCX - bmpArr | RDX - msgArr | R8 - mEnd _____
 	
-push RBP		; zapisuje adresy rejestrow RBP,RDI,RSP, aby po wykonaniu procedury, zachowac spojnosc w pamieci
+push RBP		; zapisuje adresy rejestrow RBP,RDI,RSP,RBX, aby po wykonaniu procedury, zachowac spojnosc w pamieci
 push RDI				
 push RSP	
+push RBX
 
 mov R9, RDX		;zapisuje wskaznik na tablice z wiadomoscia, aby moc uzywac instrukcji mul, ktora potrzebuje rejestru RDX do poprawnego dzialania
 xor RBX, RBX	;licznik wewnetrznej petli (inner_for) zapisany w rejestrze al, ktora w cpp wyglada tak: for(int i=1; i<=24; i+=3)
@@ -120,12 +143,13 @@ mov R14b, [R9 + R15]	;czytam przy pomocy iteratora zewnetrznej petli (RBX) jeden
 					
 	continue:				;etykieta sluzaca powrotowi do petli
 	shr R14b, 1				;przesuwam bity w rejestrze, zawierajacym znak do zakodowania. 
-					
 	add BL, 3								;inkrementuje licznik wewnetrznej etykiety o 3, poniewaz dekodujemy co 3 bajt. 
 											;Ta wartosc jest uzywana w okresleniu indeksu tablicy do zakodowania znakow.
 	cmp BL, BMP_BYTE_COUNT_FOR_ONE_CHAR		;sprawdzam warunek konczacy petle (iterator <= 24 (BMP_BYTE_COUNT_FOR_ONE_CHAR))
-	jle inner_for							;po sprawdzeniu warunku skoku wewnetrznej petli, skaczemy do kolejnej iteracji, badz tez wychodzimy z niej, przechodzac do kolejnej iteracji zewnetrznej petli
-	jmp inner_loop_end						;jesli warunek nie zostal spelniony, wychodzimy z wewnetrznej petli, przechodzac do zewnetrznej, gdzie nastepnie zostanie sprawdzany warunek petli.
+	jle inner_for							;po sprawdzeniu warunku skoku wewnetrznej petli, skaczemy do kolejnej iteracji, badz tez wychodzimy z niej, 
+											;przechodzac do kolejnej iteracji zewnetrznej petli
+	jmp inner_loop_end						;jesli warunek nie zostal spelniony, wychodzimy z wewnetrznej petli, przechodzac do zewnetrznej, 
+											;gdzie nastepnie zostanie sprawdzany warunek petli.
 
 	
 	do_operations:	;etykieta kodujaca wiadomosc w bitmapie. Wykorzystuje tutaj operacje wektorowe.
@@ -140,7 +164,8 @@ mov R14b, [R9 + R15]	;czytam przy pomocy iteratora zewnetrznej petli (RBX) jeden
 							;ponizej neguje wartosc rejestru, ktora dziala tylko w przypadku, gdy w rejestrze bylo 1. 
 					
 	not r13b				;w przypadku, gdy w rejestrze jest 1, neguje binarnie zapisany bit 00000001 -> 11111110, a nastepnie przesuwam binarnie o 7 miejsc
-							;niestety operacja 00000000 -> 11111111 nie pozwala na uzyskanie 1 (operacja daje 128), wiec zmuszony zostalem skorzystac z osobnej etykiety do tego przeznaczonej (was_zero)
+							;niestety operacja 00000000 -> 11111111 nie pozwala na uzyskanie 1 (operacja daje 128), wiec zmuszony zostalem skorzystac z 
+							;osobnej etykiety do tego przeznaczonej (was_zero)
 	shl r13b, 7				;przesuwam o 7 miejsc otrzymujac negacje bitu z rejestru r13b o wartosci 1
 	continue_encoding:		;etykieta sluzaca do powrotu z etykiety was_zero. 
 	cvtsi2ss xmm0, r13d		;laduje zanegowany bit do rejestru uzyskujac porzadane ustawienie rejestru xmm0: 0|0|R13d|!R13d
@@ -189,6 +214,7 @@ inc R15d			;inkrementuje licznik zewnetrznej etykiety-petli for (outer_for)
 cmp R15d, R8d		;porownuje z mEnd
 jne outer_for	;skacze jesli mniejsze
 	
+pop RBX
 pop RSP		;z koncem programu ustawiam spowrotem wartosci rejestrow pobierajac je ze stosu.
 pop RDI						
 pop RBP						
