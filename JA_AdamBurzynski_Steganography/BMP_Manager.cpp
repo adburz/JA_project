@@ -297,6 +297,7 @@ __int64 BMP_Manager::run(bool programType, bool algType, short tCount)
 				runDecoder(algType);
 				saveMessage();
 			}
+
 		return timer.getCounterTotalTicks();
 	}
 
